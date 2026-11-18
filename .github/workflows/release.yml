@@ -1,0 +1,54 @@
+name: Release Plugin
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install JPRM
+        run: pip install jprm
+
+      - name: Build and Package Plugin
+        run: |
+          mkdir -p artifacts
+          jprm plugin build . --output=./artifacts --version=${{ github.ref_name != '' && startsWith(github.ref_name, 'v') && github.ref_name || '' }}
+
+      - name: Update Manifest
+        run: |
+          jprm repo add ./manifest.json ./artifacts/*.zip --url=https://github.com/${{ github.repository }}/releases/download/v1.1.0.0/
+
+      - name: Commit updated manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git diff --staged --quiet || git commit -m "Update manifest.json"
+          git push
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.1.0.0
+          name: v1.1.0.0
+          files: ./artifacts/*.zip
