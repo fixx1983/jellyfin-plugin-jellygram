@@ -14,7 +14,7 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         Instance = this;
     }
 
-    public override string Name => "Jellygram";
+    public override string Name => "Jellygram Italiano";
 
     public override Guid Id => Guid.Parse("f68a16a5-3020-4fd3-92d4-9f06b09dfa9a");
 
