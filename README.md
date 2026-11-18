@@ -2,213 +2,215 @@
   <img src="assets/banner.png" alt="Jellygram" width="800">
 </p>
 
-<h1 align="center">Jellygram</h1>
+<h1 align="center">Jellygram Italiano</h1>
 
 <p align="center">
-  Rich, grouped Telegram notifications for newly added Jellyfin movies and TV.
+  Notifiche Telegram ricche e raggruppate per i nuovi film e le nuove serie TV aggiunti su Jellyfin.
 </p>
 
 <p align="center">
-  <a href="https://github.com/TheCommishDeuce/jellyfin-plugin-jellygram/actions/workflows/ci.yml"><img src="https://github.com/TheCommishDeuce/jellyfin-plugin-jellygram/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <a href="https://github.com/fixx1983/jellyfin-plugin-jellygram/actions/workflows/ci.yml"><img src="https://github.com/fixx1983/jellyfin-plugin-jellygram/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="Licenza MIT"></a>
   <img src="https://img.shields.io/badge/Jellyfin-12.0.0--rc2-00A4DC" alt="Jellyfin 12.0.0-rc2">
 </p>
 
-Jellygram runs inside Jellyfin and listens directly for library additions. It waits for bulk imports to settle, resolves their hierarchy, and sends concise Telegram updates without requiring a webhook, sidecar service, or public endpoint.
+> **Nota:** Questo progetto è un fork in italiano del plugin originale [jellyfin-plugin-jellygram](https://github.com/TheCommishDeuce/jellyfin-plugin-jellygram) realizzato da **TheCommishDeuce**.
 
-## Features
+Jellygram gira direttamente all'interno di Jellyfin e ascolta in tempo reale le aggiunte alla libreria. Attende che le importazioni multiple si stabilizzino, ne risolve la gerarchia e invia aggiornamenti Telegram concisi senza richiedere webhook, servizi secondari o endpoint pubblici.
 
-- Notifications for movies, series, seasons, and episodes
-- Posters and descriptions from Jellyfin metadata
-- Hierarchical grouping that avoids one message per episode
-- Sliding batch window for slow and staggered imports
-- Metadata-readiness retries for episodes still being identified
-- Telegram groups, channels, and forum topics
-- Optional silent delivery
-- Persistent configuration through the Jellyfin dashboard
-- HTML escaping and delivery retries
+## Funzionalità
 
-## Notification hierarchy
+- Notifiche per film, serie TV, stagioni ed episodi
+- Locandine e trame recuperate dai metadati di Jellyfin
+- Raggruppamento gerarchico che evita l'invio di un messaggio per ogni singolo episodio
+- Finestra di raggruppamento dinamica per importazioni lente o scaglionate
+- Tentativi automatici di attesa per gli episodi i cui metadati sono ancora in fase di identificazione
+- Supporto a gruppi, canali e argomenti (topic) dei forum di Telegram
+- Invio silenzioso opzionale
+- Configurazione persistente direttamente dalla dashboard di Jellyfin
+- Escape HTML e nuovi tentativi automatici in caso di errore di invio
 
-| Priority | Jellyfin addition | Telegram result |
+## Gerarchia delle notifiche
+
+| Priorità | Contenuto aggiunto su Jellyfin | Risultato su Telegram |
 |---:|---|---|
-| 1 | Entire new series | One show digest that absorbs its seasons and episodes |
-| 2 | New season on an existing series | One season digest that absorbs its episodes |
-| 3 | Multiple episodes on an existing series | One grouped digest with episode ranges |
-| 4 | One episode on an existing series | One detailed episode notification |
-| — | Movie | One detailed movie notification |
+| 1 | Intera nuova serie | Un unico riepilogo della serie che ingloba stagioni ed episodi |
+| 2 | Nuova stagione di una serie esistente | Un unico riepilogo della stagione che ingloba gli episodi |
+| 3 | Più episodi di una serie esistente | Un unico riepilogo raggruppato con gli intervalli degli episodi |
+| 4 | Un singolo episodio di una serie esistente | Una notifica dettagliata per il singolo episodio |
+| — | Film | Una notifica dettagliata per il film |
 
-Higher-level additions take precedence. Importing a new series does not also produce separate season and episode notifications. Posters are attached when available; the text examples below omit them.
+Le aggiunte di livello superiore hanno la precedenza: importare una nuova serie non genera anche notifiche separate per stagioni ed episodi. Le locandine vengono allegate quando disponibili; gli esempi testuali qui sotto le omettono.
 
-### Movie
+### Film
 
-```text
-🎬 New movie
+~~~text
+🎬 Nuovo film
 Cars (2006)
 
-Description
-A hotshot rookie race car gets stranded in a rundown town and learns that winning isn't everything.
-```
+Trama
+Un'auto da corsa esordiente e ambiziosa rimane bloccata in una cittadina dimenticata e scopre che vincere non è tutto.
+~~~
 
-### New show
+### Nuova serie
 
-If the first content Jellyfin sees is a later season, Jellygram identifies it instead of merely saying “1 season”:
+Se il primo contenuto rilevato da Jellyfin appartiene a una stagione successiva alla prima, Jellygram la identifica correttamente invece di indicare genericamente "1 stagione":
 
-```text
-📺 New show
+~~~text
+📺 Nuova serie
 The Bear (2022)
-Season 05 · 8 episodes
+Stagione 05 · 8 episodi
 
-Description
-A young chef from the fine dining world returns to Chicago to run his family's sandwich shop.
-```
+Trama
+Un giovane chef dell'alta ristorazione torna a Chicago per gestire la paninoteca di famiglia.
+~~~
 
-A multi-season import uses a compact range such as `Seasons 01–03 · 28 episodes`.
+Un'importazione di più stagioni utilizza un intervallo compatto come `Stagioni 01–03 · 28 episodi`.
 
-### New season on an existing show
+### Nuova stagione di una serie esistente
 
-```text
-📚 New season
-For All Mankind — Season 03
-10 episodes included
+~~~text
+📚 Nuova stagione
+For All Mankind — Stagione 03
+10 episodi inclusi
 
-Description
-The Red Planet becomes the new frontier in the Space Race.
-```
+Trama
+Il Pianeta Rosso diventa la nuova frontiera nella corsa allo spazio.
+~~~
 
-The season notification absorbs all episodes from that season in the same batch.
+La notifica di nuova stagione ingloba tutti gli episodi di quella stagione importati nello stesso blocco.
 
-### Multiple episodes on an existing show
+### Più episodi di una serie esistente
 
-```text
-🍿 New episodes
-For All Mankind · 3 episodes
-• S03: E08–E10 — The Sands of Ares, Coming Home, Stranger in a Strange Land
-```
+~~~text
+🍿 Nuovi episodi
+For All Mankind · 3 episodi
+- S03: E08–E10 — The Sands of Ares, Coming Home, Stranger in a Strange Land
+~~~
 
-Discontinuous episode numbers remain explicit, for example `S04: E01–E03, E05`.
+Gli episodi non consecutivi vengono elencati in modo esplicito, ad esempio `S04: E01–E03, E05`.
 
-### Single episode on an existing show
+### Singolo episodio di una serie esistente
 
-```text
-🍿 New episode
+~~~text
+🍿 Nuovo episodio
 For All Mankind
 S03E08 — The Sands of Ares
 
-Description
-Helios and the Soviet mission make an unexpected discovery.
-```
+Trama
+La Helios e la missione sovietica fanno una scoperta inaspettata.
+~~~
 
-## Compatibility
+## Compatibilità
 
-The `1.1.0.0` release targets:
+La versione `1.1.0.0` è compilata per:
 
-- Jellyfin `12.0.0-rc2`
+- Jellyfin `12.0.0-rc2` (e versioni `12.x`)
 - .NET `10.0`
 
-Jellyfin plugins are ABI-specific. Do not install this build on Jellyfin 10.10 or 10.11. A new plugin release may be required when Jellyfin 12 moves from an RC to a stable ABI.
+I plugin di Jellyfin dipendono dalla versione specifica dell'ABI. Non installare questa build su Jellyfin 10.10 o 10.11.
 
-## Installation
+## Installazione
 
-### Plugin repository
+### Repository dei plugin (consigliato)
 
-Add this URL under **Dashboard → Plugins → Repositories**:
+Aggiungi questo URL in **Dashboard → Plugin → Repository**:
 
-```text
+~~~text
 https://raw.githubusercontent.com/fixx1983/jellyfin-plugin-jellygram/main/manifest.json
-```
+~~~
 
-Then install **Jellygram** from the plugin catalog and restart Jellyfin.
+Successivamente installa **Jellygram Italiano** dal catalogo dei plugin e riavvia Jellyfin.
 
-### Manual Docker installation
+### Installazione manuale su Docker
 
-1. Download `Jellygram_1.1.0.0.zip` from the GitHub release.
-2. Extract `Jellyfin.Plugin.Jellygram.dll` into the Jellyfin configuration volume:
+1. Scarica `jellygram-italiano_1.1.0.0.zip` dalla sezione Releases su GitHub.
+2. Estrai `Jellyfin.Plugin.Jellygram.dll` nel volume di configurazione di Jellyfin:
 
-   ```text
+   ~~~text
    /config/plugins/Jellygram/Jellyfin.Plugin.Jellygram.dll
-   ```
+   ~~~
 
-3. Restart the Jellyfin container.
+3. Riavvia il container di Jellyfin.
 
-For development deployments from this repository:
+Per il deploy locale in fase di sviluppo da questo repository:
 
-```bash
-./scripts/deploy-docker.sh root@your-jellyfin-host
-```
+~~~bash
+./scripts/deploy-docker.sh root@tuo-host-jellyfin
+~~~
 
-The script builds locally, finds the running Jellyfin container, copies the DLL, and restarts the container.
+Lo script compila localmente, individua il container Jellyfin attivo, copia la DLL e riavvia il container.
 
-## Telegram setup
+## Configurazione di Telegram
 
-1. Message [@BotFather](https://t.me/BotFather), run `/newbot`, and copy the bot token.
-2. Add the bot to the destination group or channel. For a channel, grant permission to post messages.
-3. Send a message in the destination chat.
-4. Open `https://api.telegram.org/bot<TOKEN>/getUpdates` and find `message.chat.id` or `channel_post.chat.id`.
-5. For forum topics, use the `message_thread_id` from an update posted inside the topic.
+1. Scrivi a [@BotFather](https://t.me/BotFather), invia `/newbot` e copia il token del bot.
+2. Aggiungi il bot al gruppo o al canale di destinazione. Nel caso di un canale, concedigli i permessi per pubblicare messaggi.
+3. Invia un messaggio nella chat di destinazione.
+4. Apri `https://api.telegram.org/bot<TOKEN>/getUpdates` e individua il valore di `message.chat.id` oppure `channel_post.chat.id`.
+5. Per gli argomenti (topic) dei forum, utilizza il valore `message_thread_id` di un aggiornamento inviato all'interno del topic.
 
-Treat the bot token like a password. If it is exposed, rotate it with BotFather.
+Tratta il token del bot come una password. Se viene esposto pubblicamente, rigeneralo tramite BotFather.
 
-## Configuration
+## Configurazione del plugin
 
-Open **Dashboard → Plugins → My Plugins → Jellygram**.
+Apri **Dashboard → Plugin → I miei plugin → Jellygram Italiano**.
 
-| Setting | Description |
+| Impostazione | Descrizione |
 |---|---|
-| Telegram bot token | Token issued by BotFather |
-| Chat ID | User, group, supergroup, or channel ID; group IDs are commonly negative |
-| Topic/thread ID | Optional Telegram forum topic |
-| Batch window | Seconds of inactivity before sending; every new item resets the timer |
-| Include descriptions | Uses Jellyfin's `Overview` metadata |
-| Include posters | Uploads Jellyfin's primary image when Telegram's caption limit permits |
-| Send silently | Delivers without a notification sound |
+| Telegram bot token | Token rilasciato da BotFather |
+| Chat ID | ID dell'utente, gruppo, supergruppo o canale; gli ID dei gruppi sono solitamente negativi |
+| Topic/thread ID | Argomento (topic) opzionale di un forum Telegram |
+| Batch window | Secondi di inattività prima dell'invio; ogni nuovo elemento azzera il timer |
+| Include descriptions | Include la trama utilizzando il metadato `Overview` di Jellyfin |
+| Include posters | Carica l'immagine principale di Jellyfin quando il limite di caratteri della didascalia Telegram lo consente |
+| Send silently | Invia la notifica senza suono |
 
-A window of `90` seconds is suitable for normal imports. For large 4K seasons copied sequentially, `300`–`600` seconds is safer.
+Una finestra di `90` secondi è adatta alle importazioni normali. Per intere stagioni in 4K di grandi dimensioni copiate in sequenza, è preferibile impostare `300`–`600` secondi.
 
-## How batching works
+## Come funziona il raggruppamento
 
-Jellygram starts an inactivity timer when Jellyfin emits `ItemAdded`. Additional additions reset the timer. Once the window closes, Jellygram reloads the items from Jellyfin and builds the smallest useful set of notifications.
+Jellygram avvia un timer di inattività quando Jellyfin genera l'evento `ItemAdded`. Ulteriori aggiunte azzerano il timer. Allo scadere della finestra, Jellygram ricarica gli elementi da Jellyfin e costruisce il set minimo e più utile di notifiche.
 
-If an episode still lacks a series ID, season ID, season number, or episode number, the whole batch waits and retries metadata resolution every minute. After ten retries it sends what it can and logs a warning, preventing one malformed item from blocking notifications indefinitely.
+Se a un episodio mancano ancora l'ID della serie, l'ID della stagione, il numero di stagione o il numero di episodio, l'intero blocco attende e riprova a risolvere i metadati ogni minuto. Dopo dieci tentativi invia ciò che è disponibile e registra un avviso nei log, evitando che un singolo file malformato blocchi le notifiche all'infinito.
 
-Jellygram currently tracks newly created Jellyfin items. Adding a 4K alternate version to an episode that already exists may produce `ItemUpdated` rather than `ItemAdded` and is intentionally not notified.
+Attualmente Jellygram monitora solo i nuovi elementi creati su Jellyfin. L'aggiunta di una versione alternativa (es. 4K) a un episodio già esistente genera un evento `ItemUpdated` anziché `ItemAdded` e intenzionalmente non produce notifiche.
 
-## Logs
+## Log
 
-Jellygram uses Jellyfin's normal logging system. For Docker:
+Jellygram utilizza il normale sistema di logging di Jellyfin. Su Docker:
 
-```bash
+~~~bash
 docker logs --follow jellyfin 2>&1 | grep --line-buffered -iE 'jellygram|telegram'
-```
+~~~
 
-Successful batches look like:
+Un invio riuscito appare così nei log:
 
-```text
+~~~text
 Jellyfin.Plugin.Jellygram.Notifications.LibraryNotifier: Sent 1 Telegram notifications for 14 library items
-```
+~~~
 
-## Build and test
+## Compilazione e test
 
-Requirements: .NET 10 SDK.
+Requisiti: .NET 10 SDK.
 
-```bash
+~~~bash
 dotnet restore Jellyfin.Plugin.Jellygram.sln
 dotnet test Jellyfin.Plugin.Jellygram.sln -c Release
 dotnet build Jellyfin.Plugin.Jellygram.sln -c Release --no-restore
-```
+~~~
 
-Create the release archive and MD5 checksum:
+Creazione dell'archivio di rilascio e del checksum MD5:
 
-```bash
+~~~bash
 ./scripts/package.sh
-```
+~~~
 
-## Privacy and security
+## Privacy e sicurezza
 
-Jellygram sends the configured notification text and selected artwork to Telegram's Bot API. It does not expose an inbound HTTP endpoint or contact metadata providers directly. The bot token is stored in Jellyfin's plugin configuration and is never intentionally logged.
+Jellygram invia esclusivamente il testo configurato della notifica e la locandina selezionata alle API ufficiali di Telegram Bot. Non espone alcun endpoint HTTP in ingresso né contatta direttamente provider esterni di metadati. Il token del bot è salvato nella configurazione dei plugin di Jellyfin e non viene mai registrato intenzionalmente nei log.
 
-See [SECURITY.md](SECURITY.md) for vulnerability reporting.
+Consulta [SECURITY.md](SECURITY.md) per segnalare eventuali vulnerabilità.
 
-## License
+## Licenza
 
 [MIT](LICENSE)
