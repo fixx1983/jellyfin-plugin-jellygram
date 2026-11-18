@@ -3,10 +3,10 @@
     "category": "Notifications",
     "guid": "f68a16a5-3020-4fd3-92d4-9f06b09dfa9a",
     "name": "Jellygram",
-    "owner": "TUO_USERNAME",
+    "owner": "fixx1983",
     "overview": "Notifiche Telegram raggruppate per i nuovi contenuti su Jellyfin",
     "description": "Invia notifiche Telegram quando film e serie TV vengono aggiunti a Jellyfin. Serie complete, stagioni ed episodi vengono raggruppati per evitare spam.",
-    "imageUrl": "https://raw.githubusercontent.com/TUO_USERNAME/jellyfin-plugin-jellygram/main/assets/plugin-card.png",
+    "imageUrl": "https://raw.githubusercontent.com/fixx1983/jellyfin-plugin-jellygram/main/assets/plugin-card.png",
     "versions": []
   }
 ]
