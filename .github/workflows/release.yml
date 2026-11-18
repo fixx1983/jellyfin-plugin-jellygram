@@ -33,10 +33,11 @@ jobs:
         run: |
           mkdir -p artifacts
           jprm plugin build . --output=./artifacts --version=1.1.0.0
+          find ./artifacts -mindepth 2 -name "*.zip" -exec mv {} ./artifacts/ \;
 
       - name: Update Manifest
         run: |
-          jprm repo add ./manifest.json ./artifacts/**/*.zip --url=https://github.com/${{ github.repository }}/releases/download/v1.1.0.0/
+          jprm repo add ./manifest.json ./artifacts/*.zip --url=https://github.com/${{ github.repository }}/releases/download/v1.1.0.0/
 
       - name: Commit updated manifest
         run: |
@@ -51,4 +52,4 @@ jobs:
         with:
           tag_name: v1.1.0.0
           name: v1.1.0.0
-          files: ./artifacts/**/*.zip
+          files: ./artifacts/*.zip
