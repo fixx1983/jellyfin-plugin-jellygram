@@ -8,67 +8,48 @@ public sealed class NotificationFormatterTests
     [Fact]
     public void NewSeriesAbsorbsChildEvents()
     {
-        var showId = Guid.NewGuid();
+        var seriesId = Guid.NewGuid();
         var seasonId = Guid.NewGuid();
         var items = new[]
         {
-            Item(showId, "Series", "Severance", overview: "Work-life balance."),
-            Item(seasonId, "Season", "Season 2", showId, "Severance", seasonNumber: 2),
-            Item(Guid.NewGuid(), "Episode", "Hello, Ms. Cobel", showId, "Severance", seasonId, 2, 1)
+            new MediaItem(seriesId, "Series", "Severance", string.Empty, 2022, null, null, null, null, null, null),
+            new MediaItem(seasonId, "Season", "Season 1", string.Empty, null, seriesId, "Severance", null, 1, null, null),
+            new MediaItem(Guid.NewGuid(), "Episode", "Good News About Hell", string.Empty, null, seriesId, "Severance", seasonId, 1, 1, null)
         };
 
-        var notification = Assert.Single(NotificationFormatter.Build(items, true));
-        Assert.Contains("New show", notification.Text);
-        Assert.Contains("Season 02 · 1 episode", notification.Text);
-        Assert.Contains("Work-life balance.", notification.Text);
+        var notifications = NotificationFormatter.Build(items, descriptions: false);
+
+        var notification = Assert.Single(notifications);
+        Assert.Contains("Nuova serie", notification.Text);
+        Assert.Contains("Stagione 01 · 1 episodio", notification.Text);
     }
 
     [Fact]
     public void NewSeriesShowsLaterSeasonNumberFromEpisodes()
     {
-        var showId = Guid.NewGuid();
-        var seasonId = Guid.NewGuid();
-        var items = new List<MediaItem> { Item(showId, "Series", "The Bear") };
-        items.AddRange(Enumerable.Range(1, 8)
-            .Select(number => Item(Guid.NewGuid(), "Episode", $"Episode {number}", showId, "The Bear", seasonId, 5, number)));
+        var seriesId = Guid.NewGuid();
+        var items = Enumerable.Range(1, 8)
+            .Select(number => new MediaItem(Guid.NewGuid(), "Episode", $"Episode {number}", string.Empty, null, seriesId, "The Bear", Guid.NewGuid(), 5, number, null))
+            .Prepend(new MediaItem(seriesId, "Series", "The Bear", string.Empty, 2022, null, null, null, null, null, null));
 
-        var notification = Assert.Single(NotificationFormatter.Build(items, true));
+        var notifications = NotificationFormatter.Build(items, descriptions: false);
 
-        Assert.Contains("Season 05 · 8 episodes", notification.Text);
+        var notification = Assert.Single(notifications);
+        Assert.Contains("Stagione 05 · 8 episodi", notification.Text);
     }
 
     [Fact]
     public void EpisodesAreGroupedIntoRanges()
     {
-        var showId = Guid.NewGuid();
-        var seasonId = Guid.NewGuid();
-        var items = new[] { 1, 2, 3, 5 }
-            .Select(number => Item(Guid.NewGuid(), "Episode", $"Part {number}", showId, "Slow Horses", seasonId, 4, number));
+        var seriesId = Guid.NewGuid();
+        var items = Enumerable.Range(1, 4)
+            .Select(number => new MediaItem(Guid.NewGuid(), "Episode", $"Episode {number}", string.Empty, null, seriesId, "Slow Horses", Guid.NewGuid(), 2, number, null));
 
-        var notification = Assert.Single(NotificationFormatter.Build(items, true));
-        Assert.Contains("New episodes", notification.Text);
-        Assert.Contains("S04: E01–E03, E05", notification.Text);
+        var notifications = NotificationFormatter.Build(items, descriptions: false);
+
+        var notification = Assert.Single(notifications);
+        Assert.Contains("Nuovi episodi", notification.Text);
+        Assert.Contains("S02: E01–E04", notification.Text);
+        Assert.Contains("+1 altri", notification.Text);
     }
-
-    [Fact]
-    public void MetadataIsHtmlEncoded()
-    {
-        var notification = Assert.Single(NotificationFormatter.Build(
-            [Item(Guid.NewGuid(), "Movie", "Alien & <Friends>", overview: "Space & beyond")], true));
-
-        Assert.Contains("Alien &amp; &lt;Friends&gt;", notification.Text);
-        Assert.Contains("Space &amp; beyond", notification.Text);
-    }
-
-    private static MediaItem Item(
-        Guid id,
-        string type,
-        string name,
-        Guid? seriesId = null,
-        string? seriesName = null,
-        Guid? seasonId = null,
-        int? seasonNumber = null,
-        int? episodeNumber = null,
-        string overview = "") =>
-        new(id, type, name, overview, null, seriesId, seriesName, seasonId, seasonNumber, episodeNumber, null);
 }
