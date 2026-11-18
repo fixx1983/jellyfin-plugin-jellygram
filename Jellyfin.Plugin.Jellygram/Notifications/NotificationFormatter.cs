@@ -12,7 +12,7 @@ public static class NotificationFormatter
 
         foreach (var movie in items.Where(x => x.Type == "Movie").OrderBy(x => x.Name))
         {
-            result.Add(Create($"🎬 <b>New movie</b>\n<b>{E(movie.Name)}{Year(movie)}</b>", movie, descriptions));
+            result.Add(Create($"🎬 <b>Nuovo film</b>\n<b>{E(movie.Name)}{Year(movie)}</b>", movie, descriptions));
         }
 
         var series = items.Where(x => x.Type == "Series").ToList();
@@ -29,7 +29,7 @@ public static class NotificationFormatter
                 .Where(x => x.SeasonNumber.HasValue)
                 .Select(x => x.SeasonNumber!.Value);
             var summary = ShowImportSummary(seasonNumbers, showSeasons.Count, showEpisodes.Count);
-            var text = $"📺 <b>New show</b>\n<b>{E(show.Name)}{Year(show)}</b>";
+            var text = $"📺 <b>Nuova serie</b>\n<b>{E(show.Name)}{Year(show)}</b>";
             if (summary.Length > 0)
             {
                 text += $"\n{summary}";
@@ -48,9 +48,9 @@ public static class NotificationFormatter
             var values = group.OrderBy(x => x.SeasonNumber).ToList();
             var ids = values.Select(x => x.Id).ToHashSet();
             var childCount = episodes.Count(x => x.SeasonId is not null && ids.Contains(x.SeasonId.Value));
-            var label = values.Count == 1 ? "season" : "seasons";
-            var ranges = Ranges(values.Where(x => x.SeasonNumber.HasValue).Select(x => x.SeasonNumber!.Value), "Season ");
-            var text = $"📚 <b>New {label}</b>\n<b>{E(SeriesName(values[0]))}</b>";
+            var header = values.Count == 1 ? "Nuova stagione" : "Nuove stagioni";
+            var ranges = Ranges(values.Where(x => x.SeasonNumber.HasValue).Select(x => x.SeasonNumber!.Value), "Stagione ");
+            var text = $"📚 <b>{header}</b>\n<b>{E(SeriesName(values[0]))}</b>";
             if (ranges.Length > 0)
             {
                 text += $" — {ranges}";
@@ -58,7 +58,8 @@ public static class NotificationFormatter
 
             if (childCount > 0)
             {
-                text += $"\n{childCount} episode{Plural(childCount)} included";
+                var epWord = childCount == 1 ? "episodio incluso" : "episodi inclusi";
+                text += $"\n{childCount} {epWord}";
             }
 
             var description = descriptions ? values.FirstOrDefault(x => x.Overview.Length > 0)?.Overview : null;
@@ -76,11 +77,11 @@ public static class NotificationFormatter
                 var code = episode.SeasonNumber.HasValue && episode.EpisodeNumber.HasValue
                     ? $"S{episode.SeasonNumber:00}E{episode.EpisodeNumber:00} — "
                     : string.Empty;
-                result.Add(Create($"🍿 <b>New episode</b>\n<b>{E(SeriesName(episode))}</b>\n{code}<i>{E(episode.Name)}</i>", episode, descriptions));
+                result.Add(Create($"🍿 <b>Nuovo episodio</b>\n<b>{E(SeriesName(episode))}</b>\n{code}<i>{E(episode.Name)}</i>", episode, descriptions));
                 continue;
             }
 
-            var builder = new StringBuilder($"🍿 <b>New episodes</b>\n<b>{E(SeriesName(values[0]))}</b> · {values.Count} episodes");
+            var builder = new StringBuilder($"🍿 <b>Nuovi episodi</b>\n<b>{E(SeriesName(values[0]))}</b> · {values.Count} episodi");
             foreach (var season in values.GroupBy(x => x.SeasonNumber).Take(10))
             {
                 var prefix = season.Key.HasValue ? $"S{season.Key:00}: " : string.Empty;
@@ -88,7 +89,7 @@ public static class NotificationFormatter
                 var names = string.Join(", ", season.Take(3).Select(x => E(Shorten(x.Name, 70))));
                 if (season.Count() > 3)
                 {
-                    names += $", +{season.Count() - 3} more";
+                    names += $", +{season.Count() - 3} altri";
                 }
 
                 builder.Append($"\n• {prefix}{ranges} — {names}");
@@ -106,7 +107,7 @@ public static class NotificationFormatter
 
     private static string Description(string text, string? value) => string.IsNullOrWhiteSpace(value)
         ? text
-        : $"{text}\n\n<b>Description</b>\n{E(Shorten(value, 900))}";
+        : $"{text}\n\n<b>Trama</b>\n{E(Shorten(value, 900))}";
 
     private static string ShowImportSummary(IEnumerable<int> seasonNumbers, int seasonCount, int episodeCount)
     {
@@ -114,24 +115,24 @@ public static class NotificationFormatter
         string seasonSummary;
         if (numbers.Count == 0)
         {
-            seasonSummary = seasonCount > 0 ? $"{seasonCount} season{Plural(seasonCount)}" : string.Empty;
+            seasonSummary = seasonCount > 0 ? $"{seasonCount} {(seasonCount == 1 ? "stagione" : "stagioni")}" : string.Empty;
         }
         else
         {
             var includesSpecials = numbers.Remove(0);
             seasonSummary = numbers.Count switch
             {
-                0 when includesSpecials => "Specials",
-                1 => $"Season {numbers[0]:00}",
-                _ => $"Seasons {Ranges(numbers, string.Empty)}"
+                0 when includesSpecials => "Speciali",
+                1 => $"Stagione {numbers[0]:00}",
+                _ => $"Stagioni {Ranges(numbers, string.Empty)}"
             };
             if (includesSpecials && numbers.Count > 0)
             {
-                seasonSummary += " + Specials";
+                seasonSummary += " + Speciali";
             }
         }
 
-        var episodeSummary = episodeCount > 0 ? $"{episodeCount} episode{Plural(episodeCount)}" : string.Empty;
+        var episodeSummary = episodeCount > 0 ? $"{episodeCount} {(episodeCount == 1 ? "episodio" : "episodi")}" : string.Empty;
         return string.Join(" · ", new[] { seasonSummary, episodeSummary }.Where(x => x.Length > 0));
     }
 
@@ -155,8 +156,6 @@ public static class NotificationFormatter
     private static string SeriesName(MediaItem item) => item.SeriesName ?? item.Name;
 
     private static string Year(MediaItem item) => item.Year.HasValue ? $" ({item.Year})" : string.Empty;
-
-    private static string Plural(int value) => value == 1 ? string.Empty : "s";
 
     private static string Shorten(string value, int length)
     {
