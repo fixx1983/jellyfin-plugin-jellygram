@@ -115,7 +115,7 @@ Jellyfin plugins are ABI-specific. Do not install this build on Jellyfin 10.10 o
 Add this URL under **Dashboard → Plugins → Repositories**:
 
 ```text
-https://raw.githubusercontent.com/TheCommishDeuce/jellyfin-plugin-jellygram/main/manifest.json
+https://raw.githubusercontent.com/fixx1983/jellyfin-plugin-jellygram/main/manifest.json
 ```
 
 Then install **Jellygram** from the plugin catalog and restart Jellyfin.
